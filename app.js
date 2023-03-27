@@ -9,10 +9,12 @@ var indexRouter = require('./routes/index');
 const mongoose = require('mongoose');
 const utilsHelper = require('./helpers/utils.helper');
 
+const MONGODB_URI = process.env.MONGODB_URI
+
 main().catch(err => console.log(err));
 
 async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/ash');
+    await mongoose.connect(MONGODB_URI);
 }
 
 

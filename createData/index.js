@@ -1,11 +1,15 @@
 const fs = require("fs")
 const mongoose = require('mongoose');
+require("dotenv").config()
+
 const { Card, General, Generator, Depleter } = require("../model/Card");
+
+const MONGODB_URI = process.env.MONGODB_URI
 
 main().catch(err => console.log(err));
 
 async function main() {
-    await mongoose.connect('mongodb://127.0.0.1:27017/ash');
+    await mongoose.connect("mongodb+srv://tan:tanvo@carddb.qxpka1f.mongodb.net/?retryWrites=true&w=majority");
 }
 
 
