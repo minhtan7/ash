@@ -6,22 +6,21 @@ const PRIVATE_KEY = process.env.PRIVATE_KEY
 
 const userSchema = new Schema({
     name: { type: String, require: true },
-    passowrd: { type: String, require: true },
+    password: { type: String, require: true },
     email: { type: String, require: true },
-    collection: [{ type: Schema.Types.ObjectId, ref: "Card" }],
+    collections: [{ type: Schema.Types.ObjectId, ref: "Card" }],
     deck: [{ type: Schema.Types.ObjectId, ref: "Card" }]
 }, {
     timestamps: true
 })
 
-userSchema.methods.generateToken = async () => {
-    try {
-        const token = jwt.sign({ foo: 'bar' }, PRIVATE_KEY, { expiresIn: '7d' });
-        return token
-    } catch (error) {
-        throw new AppError("400", "Token error", error.message)
-    }
-}
+
+userSchema.methods.generateToken = async function () {
+    const accessToken = await jwt.sign({ _id: this._id }, PRIVATE_KEY, {
+        expiresIn: "7d",
+    });
+    return accessToken;
+};
 
 const User = new model("User", userSchema)
 module.exports = User
