@@ -51,5 +51,19 @@ userController.login = async (req, res, next) => {
     );
 };
 
+userController.getMe = catchAsync(async (req, res, next) => {
+    const userId = req.userId
+
+    const user = await User.findById(userId).select("name email collections deck")
+    sendResponse(
+        res,
+        200,
+        true,
+        user,
+        null,
+        "Get user me"
+    );
+
+})
 
 module.exports = userController

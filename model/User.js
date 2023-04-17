@@ -14,6 +14,12 @@ const userSchema = new Schema({
     timestamps: true
 })
 
+userSchema.methods.toJSON = function () {
+    const obj = this._doc;
+    delete obj.password;
+    return obj;
+};
+
 
 userSchema.methods.generateToken = async function () {
     const accessToken = await jwt.sign({ _id: this._id }, PRIVATE_KEY, {

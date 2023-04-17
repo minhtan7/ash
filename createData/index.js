@@ -15,7 +15,7 @@ async function main() {
 
 const createData = async () => {
     try {
-        let db = JSON.parse(fs.readFileSync("db.json"))["Card DB"]
+        let db = JSON.parse(fs.readFileSync("Game-card-data-3.json"))["Card DB"]
         //clear null
 
         Card.collection.drop()
@@ -28,9 +28,10 @@ const createData = async () => {
                 const defense = card.newdefense
                 const resource = card.newresource
                 const description = card.Description
-                const imageUrl = card.ImageUrl + ".jpg"
-                // const category = card.Category
-                const data = { name, star, attack, defense, resource, description, imageUrl }
+                const imageUrl = card.ImageUrl + ".png"
+                const faction = card.faction
+                const category = card.Category
+                const data = { name, star, attack, defense, resource, description, imageUrl, faction, category }
                 let newCard
                 if (card.Type === "general") {
                     newCard = new General(data)
