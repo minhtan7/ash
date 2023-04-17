@@ -9,22 +9,23 @@ const cardBaseSchema = Schema({
     resource: { type: Number },
     description: { type: String, require: true },
     imageUrl: { type: String },
-    slug: { type: String, require: true }
+    slug: { type: String, require: true },
+    faction: { type: String, require: true, enum: ["roman", "viking", "spartan", "egyptian", "threekd"] }
 }, {
     timestamps: true,
     discriminatorKey: 'type'
 })
 
 const depleterCardSchema = Schema({
-    category: { type: String, enum: ["soldier", "missile"] },
+    category: { type: String, enum: ["Soldier", "Missle"] },
 })
 
 const generatorCardSchema = Schema({
-    category: { type: String, enum: ["defense", "resource"] },
+    category: { type: String, enum: ["Defense", "Resource"] },
 })
 
 const generalCardSchema = Schema({
-    category: { type: String, enum: ["leader"] },
+    category: { type: String, enum: ["Leader"] },
 })
 
 cardBaseSchema.pre('save', async function (next) {

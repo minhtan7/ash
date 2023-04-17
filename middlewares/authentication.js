@@ -8,7 +8,7 @@ authMiddleware.loginRequired = (req, res, next) => {
         const tokenString = req.headers.authorization;
         if (!tokenString) return next(new Error("401 - Access Token required"));
         const token = tokenString.replace("Bearer ", "");
-
+        console.log(token)
         jwt.verify(token, PRIVATE_KEY, (err, payload) => {
             if (err) {
                 if (err.name === "TokenExpiredError") {
