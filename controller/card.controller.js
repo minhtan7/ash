@@ -1,6 +1,8 @@
+const { Types } = require("mongoose")
 const { createSlug } = require("../helpers/slug.helper")
 const { catchAsync, AppError, sendResponse } = require("../helpers/utils.helper")
 const { Depleter, Card, Generator, General } = require("../model/Card")
+const User = require("../model/User")
 
 
 cardController = {}
@@ -37,6 +39,55 @@ cardController.getAllCards = catchAsync(async (req, res, next) => {
         .skip(offset)
         .limit(limit);
     return sendResponse(res, 200, true, { cards, page, totalPages }, null, "Get cards")
+})
+
+cardController.addCardToDeck = catchAsync(async (req, res, next) => {
+    const userId = req.userId
+    const { cardId } = req.body
+    const card = await Card.findById(cardId)
+
+    if (!card) throw new AppError("404", "Card not found", "Add Card to Deck fail")
+
+    let user = await User.findById(userId).lean()
+    console.log(user.collections)
+    const isCardInCollection = user.collections.filter(c => c.toString() === cardId)
+    if (!isCardInCollection.length) {
+        throw new AppError("400", "Card not found in Collections", "Add Card to Deck fail")
+    }
+
+    user = await User.findOneAndUpdate({ _id: userId }, {
+        $push: { deck: cardId }
+    }, {
+        new: true
+    })
+
+    return sendResponse(res, 200, true, user, null, "Add card to deck success")
+})
+
+cardController.packOpening = catchAsync(async (req, res, next) => {
+    const userId = req.userId
+    const { type } = req.params
+
+    const cards = await Card.aggregate([
+        {
+            $match: { type }
+        },
+        {
+            $sample: { size: 10 }
+        }
+    ])
+    console.log(cards)
+    return sendResponse(res, 200, true, cards, null, "Pack opening!")
+
+})
+
+cardController.addCardToCollection = catchAsync(async (req, res, next) => {
+    const userId = req.userId
+    const { cardIds } = req.body
+    await User.findOneAndUpdate({ _id: userId }, {
+        $push: { collections: { $each: cardIds } }
+    })
+    return sendResponse(res, 200, true, null, null, "Add cards to user collections !")
 })
 
 cardController.createDepleterCard = catchAsync(async (req, res, next) => {

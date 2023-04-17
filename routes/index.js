@@ -8,3 +8,4 @@ const userApi = require("./user")
 router.use("/users", userApi)
 
 module.exports = router;
+
