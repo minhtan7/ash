@@ -4,7 +4,7 @@ const cardController = require("../controller/card.controller");
 const { loginRequired } = require("../middlewares/authentication");
 
 router.get("/", cardController.getAllCards)
-router.get("/mycard", cardController.getMyCards)
+router.get("/mycard", loginRequired, cardController.getMyCards)
 router.post("/depleter", cardController.createDepleterCard)
 router.post("/generator", cardController.createGeneratorCard)
 router.post("/general", cardController.createGeneralCard)

@@ -1,4 +1,4 @@
-const { Types } = require("mongoose")
+const { Types, default: mongoose } = require("mongoose")
 const { createSlug } = require("../helpers/slug.helper")
 const { catchAsync, AppError, sendResponse } = require("../helpers/utils.helper")
 const { Depleter, Card, Generator, General } = require("../model/Card")
@@ -48,31 +48,82 @@ cardController.getMyCards = catchAsync(async (req, res, next) => {
     limit = parseInt(limit) || 10;
 
     const allowedFilter = ["type", "star", "category"]
+
     let filterConditions = []
     if (filter.name) {
         filterConditions.push({
-            name: { $regex: filter.name, $options: "i" },
+            [`cards.name`]: filter.name
         });
     }
 
     allowedFilter.forEach((el) => {
-        if (filter[el]) {
-            filterConditions.push({ [el]: filter[el] })
+        console.log(el)
+        if (filter[el] && el === "star") {
+            console.log("here star", el)
+            filterConditions.push({ [`cards.${el}`]: parseInt(filter[el]) })
+        } else if (filter[el]) {
+            filterConditions.push({ [`cards.${el}`]: filter[el] })
         }
     })
-    filterConditions.push({ _id: userId })
 
     const filterCrireria = filterConditions.length
         ? { $and: filterConditions }
         : {};
+
+    // if (filter.name) {
+    //     filterConditions.push({
+    //         name: { $regex: filter.name, $options: "i" },
+    //     });
+    // }
+
+    // allowedFilter.forEach((el) => {
+    //     if (filter[el]) {
+    //         filterConditions.push({ [el]: filter[el] })
+    //     }
+    // })
+    // filterConditions.push({ _id: userId })
+
+    // const filterCrireria = filterConditions.length
+    //     ? { $and: filterConditions }
+    //     : {};
     console.log(filterCrireria)
-    const count = await Card.countDocuments(filterCrireria);
+    let cards = await User.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(userId) } },
+        {
+            $lookup: {
+                from: "cards",
+                localField: "collections",
+                foreignField: "_id",
+                as: "cards"
+            }
+        },
+        {
+            $unwind: {
+                path: "$cards"
+            }
+        },
+        {
+            $project: {
+                cards: 1
+            }
+        },
+        {
+            $match: {
+                '$and': [
+                    { 'cards.type': 'General' },
+                    { 'cards.star': 3 },
+                    { 'cards.category': 'Leader' }
+                ]
+            }
+        }
+    ])
+    console.log(cards)
+
+    const count = cards.length
     const totalPages = Math.ceil(count / limit);
     const offset = limit * (page - 1);
-    let cards = await Card.find(filterCrireria)
-        .sort({ createdAt: -1 })
-        .skip(offset)
-        .limit(limit);
+    cards = cards.slice(offset, offset + limit)
+
     return sendResponse(res, 200, true, { cards, page, totalPages }, null, "Get cards")
 })
 
