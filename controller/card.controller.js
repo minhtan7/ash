@@ -44,20 +44,20 @@ cardController.getMyCards = catchAsync(async (req, res, next) => {
     const userId = req.userId
     let { page, limit, ...filter } = req.query
 
+
     page = parseInt(page) || 1;
     limit = parseInt(limit) || 10;
 
     const allowedFilter = ["type", "star", "category"]
-
     let filterConditions = []
+
     if (filter.name) {
         filterConditions.push({
-            [`cards.name`]: filter.name
+            [`cards.name`]: { $regex: filter.name, $options: "i" }
         });
     }
 
     allowedFilter.forEach((el) => {
-        console.log(el)
         if (filter[el] && el === "star") {
             console.log("here star", el)
             filterConditions.push({ [`cards.${el}`]: parseInt(filter[el]) })
@@ -86,7 +86,7 @@ cardController.getMyCards = catchAsync(async (req, res, next) => {
     // const filterCrireria = filterConditions.length
     //     ? { $and: filterConditions }
     //     : {};
-    console.log(filterCrireria)
+    // console.log(filterCrireria)
     let cards = await User.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(userId) } },
         {
@@ -108,16 +108,9 @@ cardController.getMyCards = catchAsync(async (req, res, next) => {
             }
         },
         {
-            $match: {
-                '$and': [
-                    { 'cards.type': 'General' },
-                    { 'cards.star': 3 },
-                    { 'cards.category': 'Leader' }
-                ]
-            }
+            $match: filterCrireria
         }
     ])
-    console.log(cards)
 
     const count = cards.length
     const totalPages = Math.ceil(count / limit);
@@ -136,15 +129,25 @@ cardController.addCardToDeck = catchAsync(async (req, res, next) => {
     let user = await User.findById(userId).lean()
     console.log(user.collections)
     const isCardInCollection = user.collections.filter(c => c.toString() === cardId)
+    const isCardInDeck = user.deck.filter(c => c.toString() === cardId)
     if (!isCardInCollection.length) {
         throw new AppError("400", "Card not found in Collections", "Add Card to Deck fail")
     }
+    if (!isCardInDeck.length) {
+        await User.findOneAndUpdate({ _id: userId }, {
+            $push: { deck: cardId }
+        }, {
+            new: true
+        })
+    } else {
+        await User.findOneAndUpdate({ _id: userId }, {
+            $pull: { deck: cardId }
+        }, {
+            new: true
+        })
+    }
 
-    user = await User.findOneAndUpdate({ _id: userId }, {
-        $push: { deck: cardId }
-    }, {
-        new: true
-    })
+    user = await User.findById(userId).populate("deck")
 
     return sendResponse(res, 200, true, user, null, "Add card to deck success")
 })

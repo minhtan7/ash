@@ -34,10 +34,8 @@ userController.login = async (req, res, next) => {
 
     let user = await User.findOne({ email });
     if (!user) throw new AppError("404", "Email not exits", "Login error")
-
-    const isMatch = bcrypt.compare(password, user.password);
-
-    if (!isMatch) throw new AppError("400", "Wrong password", "Login error")
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) next(new AppError("400", "Wrong password", "Login error"))
 
     const accessToken = await user.generateToken();
 
@@ -54,7 +52,7 @@ userController.login = async (req, res, next) => {
 userController.getMe = catchAsync(async (req, res, next) => {
     const userId = req.userId
 
-    const user = await User.findById(userId).select("name email collections deck")
+    const user = await User.findById(userId).populate("deck").select("name email collections deck")
     sendResponse(
         res,
         200,
